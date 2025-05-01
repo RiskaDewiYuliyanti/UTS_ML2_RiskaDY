@@ -54,7 +54,7 @@ if nama:
     with col1:
         density = st.number_input("🧪 Density", min_value=1.0, max_value=2.0, value=1.05, step=0.01)
         age = st.number_input("🎂 Age", min_value=18, max_value=80, value=30, step=1)
-        weight = st.number_input("⚖️ Weight (kg)", min_value=40.0, max_value=150.0, value=70.0, step=0.5)
+        weight = st.number_input("⚖️ Weight (kg)", min_value=40.0, max_value=200.0, value=70.0, step=0.5)
         height = st.number_input("📏 Height (cm)", min_value=140.0, max_value=210.0, value=170.0, step=0.5)
         neck = st.number_input("👔 Neck (cm)", min_value=20, max_value=60, value=38)
         chest = st.number_input("🫁 Chest (cm)", min_value=60, max_value=150, value=100)
