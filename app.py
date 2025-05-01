@@ -1,3 +1,46 @@
+import streamlit as st
+import numpy as np
+import joblib
+import tensorflow as tf
+
+# Load model & scaler
+model = tf.lite.Interpreter(model_path="bodyfat_model.tflite")
+model.allocate_tensors()
+input_details = model.get_input_details()
+output_details = model.get_output_details()
+
+scaler = joblib.load('scaler.pkl')
+
+# Konfigurasi halaman
+st.set_page_config(page_title="🧠 Body Fat Predictor", layout="centered")
+
+# Add Poppins font & header styling
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    html, body, [class*="css"]  {
+        font-family: 'Poppins', sans-serif;
+    }
+    .main-title {
+        font-size: 2.5em;
+        font-weight: 600;
+        color: #4B8BBE;
+        text-align: center;
+        margin-bottom: 0.2em;
+    }
+    .sub-header {
+        font-size: 1.1em;
+        text-align: center;
+        color: #555;
+        margin-bottom: 2em;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Header
+st.markdown('<div class="main-title">🧠 Body Fat Predictor</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">Masukkan data tubuhmu untuk memprediksi persentase lemak tubuh 💪</div>', unsafe_allow_html=True)
+
 # Input nama
 nama = st.text_input("👤 Siapa namamu?", max_chars=30)
 
