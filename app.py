@@ -3,97 +3,79 @@ import numpy as np
 import joblib
 import tensorflow as tf
 
-# Load model & scaler
-model = tf.lite.Interpreter(model_path="bodyfat_model.tflite")
-model.allocate_tensors()
-input_details = model.get_input_details()
-output_details = model.get_output_details()
+# Load scaler
+scaler = joblib.load("scaler.pkl")
 
-scaler = joblib.load('scaler.pkl')
+# Load TFLite model
+interpreter = tf.lite.Interpreter(model_path="bodyfat_model.tflite")
+interpreter.allocate_tensors()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
-# Konfigurasi halaman
-st.set_page_config(page_title="🧠 Body Fat Predictor", layout="centered")
+# Title
+st.markdown("<h1 style='text-align: center;'>Prediksi Body Fat Percentage</h1>", unsafe_allow_html=True)
+st.markdown("---")
 
-# Tambah font Poppins & header styling
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-    html, body, [class*="css"]  {
-        font-family: 'Poppins', sans-serif;
-    }
-    .main-title {
-        font-size: 2.5em;
-        font-weight: 600;
-        color: #4B8BBE;
-        text-align: center;
-        margin-bottom: 0.2em;
-    }
-    .sub-header {
-        font-size: 1.1em;
-        text-align: center;
-        color: #555;
-        margin-bottom: 2em;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Header dengan nama pengguna
-st.markdown('<div class="main-title">🧠 Body Fat Predictor</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Masukkan data tubuhmu untuk memprediksi persentase lemak tubuh 💪</div>', unsafe_allow_html=True)
-
-# Input nama
-nama = st.text_input("👤 Siapa namamu?", max_chars=30)
-
-if nama:
-    st.success(f"Hai, {nama}! Ayo kita mulai mengisi datamu 😊")
-
-    st.markdown("---")
-
-    # Layout input
+# Input form
+with st.form("input_form"):
     col1, col2 = st.columns(2)
-
     with col1:
-        density = st.number_input("🧪 Density", min_value=1.0, max_value=2.0, value=1.05, step=0.01)
-        age = st.slider("🎂 Age", 18, 80, 30)
-        weight = st.number_input("⚖️ Weight (kg)", 40.0, 150.0, 70.0, step=0.5)
-        height = st.number_input("📏 Height (cm)", 140.0, 210.0, 170.0, step=0.5)
-        neck = st.slider("👔 Neck (cm)", 20, 60, 38)
-        chest = st.slider("🫁 Chest (cm)", 60, 150, 100)
-        abdomen = st.slider("🧍 Abdomen (cm)", 60, 150, 90)
-        
+        age = st.number_input("Umur", min_value=0, value=25)
+        weight = st.number_input("Berat Badan (kg)", min_value=0.0, format="%.2f")
+        height = st.number_input("Tinggi Badan (cm)", min_value=0.0, format="%.2f")
+        neck = st.number_input("Lingkar Leher (cm)", min_value=0.0, format="%.2f")
+        chest = st.number_input("Lingkar Dada (cm)", min_value=0.0, format="%.2f")
+        abdomen = st.number_input("Lingkar Perut (cm)", min_value=0.0, format="%.2f")
+
     with col2:
-        hip = st.number_input("🍑 Hip (cm)", 60.0, 150.0, 95.0)
-        thigh = st.slider("🦵 Thigh (cm)", 30, 90, 55)
-        knee = st.number_input("🦿 Knee (cm)", 30.0, 70.0, 40.0)
-        ankle = st.slider("🦶 Ankle (cm)", 15, 40, 22)
-        biceps = st.number_input("💪 Biceps (cm)", 20.0, 60.0, 35.0)
-        forearm = st.slider("🦾 Forearm (cm)", 15, 50, 28)
-        wrist = st.number_input("🖐️ Wrist (cm)", 10.0, 30.0, 18.0)
+        hip = st.number_input("Lingkar Pinggul (cm)", min_value=0.0, format="%.2f")
+        thigh = st.number_input("Lingkar Paha (cm)", min_value=0.0, format="%.2f")
+        knee = st.number_input("Lingkar Lutut (cm)", min_value=0.0, format="%.2f")
+        ankle = st.number_input("Lingkar Pergelangan Kaki (cm)", min_value=0.0, format="%.2f")
+        biceps = st.number_input("Lingkar Bisep (cm)", min_value=0.0, format="%.2f")
+        forearm = st.number_input("Lingkar Lengan Bawah (cm)", min_value=0.0, format="%.2f")
+        wrist = st.number_input("Lingkar Pergelangan Tangan (cm)", min_value=0.0, format="%.2f")
 
-    # Buat array dari input
-    input_features = [
-        density, age, weight, height, neck, chest, abdomen, hip,
-        thigh, knee, ankle, biceps, forearm, wrist
-    ]
+    submitted = st.form_submit_button("Prediksi")
 
-    scaled_input = scaler.transform([input_features])
-    model.set_tensor(input_details[0]['index'], scaled_input.astype(np.float32))
-    model.invoke()
-    prediction = model.get_tensor(output_details[0]['index'])[0][0]
+if submitted:
+    try:
+        # Gabungkan semua input ke array
+        input_data = np.array([[age, weight, height, neck, chest, abdomen,
+                                hip, thigh, knee, ankle, biceps, forearm, wrist]])
 
-    # Tombol prediksi
-    if st.button("🔍 Prediksi Body Fat"):
-        st.subheader(f"✨ {nama}, estimasi body fat kamu adalah: **{prediction:.2f}%**")
-        
-        if prediction > 25:
-            st.warning("⚠️ Body fat kamu agak tinggi. Pertimbangkan olahraga rutin dan pola makan seimbang.")
-        elif prediction < 10:
-            st.info("🤔 Kamu cukup lean! Tapi pastikan tetap dalam kondisi sehat.")
+        # Scaling
+        scaled_input = scaler.transform(input_data).astype(np.float32)
+
+        # Set input ke model
+        interpreter.set_tensor(input_details[0]['index'], scaled_input)
+        interpreter.invoke()
+        output = interpreter.get_tensor(output_details[0]['index'])
+
+        # Ambil prediksi
+        prediction = float(output[0][0])
+        st.success(f"**Persentase Lemak Tubuh yang Diprediksi: {prediction:.2f}%**")
+
+        # Penentuan kategori
+        if prediction < 6:
+            category = "Essential Fat"
+            desc = "Lemak minimal yang dibutuhkan untuk fungsi tubuh normal."
+        elif prediction < 14:
+            category = "Athletes"
+            desc = "Kadar lemak yang umum dimiliki atlet; sehat dan fit."
+        elif prediction < 18:
+            category = "Fitness"
+            desc = "Tingkat lemak sehat untuk individu aktif secara fisik."
+        elif prediction < 25:
+            category = "Average"
+            desc = "Kadar lemak rata-rata populasi umum. Masih dalam batas sehat."
         else:
-            st.balloons()
-            st.success("🎯 Body fat kamu termasuk sehat! Great job 💪")
+            category = "Obese"
+            desc = "Lemak tubuh berlebih. Perlu perhatian dan pola hidup sehat."
 
-    st.markdown("---")
-    st.caption("© 2025 Body Fat Predictor by [Riska D Y]")
-else:
-    st.info("👆 Masukkan namamu dulu untuk memulai prediksi ya!")
+        # Tampilkan kategori dan edukasi
+        st.markdown(f"### Kategori Lemak Tubuh: **{category}**")
+        st.info(desc)
+
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat memproses prediksi: {e}")
