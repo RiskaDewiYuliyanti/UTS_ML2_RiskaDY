@@ -14,7 +14,7 @@ scaler = joblib.load('scaler.pkl')
 # Konfigurasi halaman
 st.set_page_config(page_title="🧠 Body Fat Predictor", layout="centered")
 
-# Tambah font Poppins & header styling
+# Add Poppins font & header styling
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
@@ -87,7 +87,13 @@ if nama:
         wrist     # Wrist
     ]
 
+    # Scale the input data
     scaled_input = scaler.transform([input_features])
+    
+    # Debugging: Print shape of scaled_input
+    st.write(f"Scaled input shape: {scaled_input.shape}")
+
+    # Pass to the model
     model.set_tensor(input_details[0]['index'], scaled_input.astype(np.float32))
     model.invoke()
     prediction = model.get_tensor(output_details[0]['index'])[0][0]
